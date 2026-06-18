@@ -7,7 +7,12 @@ Alpha Signal Terminal is an event-driven equity research application that combin
 
 [Open the live application](https://equity-impact-predictor-mjjwp8oarqbeenecyzk3pw.streamlit.app/)
 
-![Alpha Signal Terminal dashboard](assets/dashboard-preview.png)
+
+<div align="center">
+  <img src="assets\dashboard-preview.PNG" alt="Dashboard Preview" width="100%" />
+  <p><i>Generated interactive dashboard featuring Desk Recommendation and Key Catalyst Summary</i></p>
+</div>
+
 
 ## Overview
 
