@@ -20,21 +20,23 @@ An institutional-grade Quantitative Event Monitor. This full-stack pipeline inge
 
 *(**Note to self:** Drag and drop your main dashboard screenshot right here to let GitHub generate the image link)*
 
+
 <div align="center">
-  <img src="[Drag and drop your dashboard screenshot here]" alt="Alpha Signal Terminal Main Dashboard" width="800"/>
+  <img src="assets/dashboard-preview.png" alt="Alpha Signal Terminal Main Dashboard" width="800"/>
 </div>
 
-### Explainable AI & Event Study Trajectories
+
+### Explainable AI & Event Study Trajectories	
 
 Instead of a "black box" prediction, the terminal leverages **SHAP (SHapley Additive exPlanations)** to mathematically isolate and visualize the exact market drivers pushing the algorithmic signal, plotted directly alongside the expected 5-day event trajectory.
 
 *(**Note to self:** Take a cropped screenshot of just the SHAP and Trajectory charts and drag it here)*
 
+
 <div align="center">
-  <img src="[Drag and drop your SHAP/Trajectory screenshot here]" alt="SHAP Feature Importance and Event Trajectory" width="800"/>
+  <img src="assets/dashboard_main.png" alt="Alpha Signal Terminal Main Dashboard" width="800"/>
 </div>
 
----
 
 ## 🏗️ Architecture & Core Components
 
