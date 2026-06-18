@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "impact-monitor"
+version = "1.0.0"
+description = "Event-Driven Equity Impact & Sentiment Predictor"
+authors = [
+    { name = "An Vo", email = "thanhan25@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "sqlalchemy>=2.0.0",
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
+    "yfinance>=0.2.0",
+    "xgboost>=2.0.0",
+    "shap>=0.42.0",
+    "scikit-learn>=1.2.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "flake8>=6.0.0",
+    "black>=23.0.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-v --cov=impact_monitor --cov-report=term-missing"
+testpaths = ["tests"]

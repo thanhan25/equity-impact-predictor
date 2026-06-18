@@ -1,0 +1,24 @@
+# Environments
+venv/
+env/
+.env
+
+# Data & Databases
+data/raw/*
+data/processed/*
+*.sqlite
+*.db
+
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Outputs
+outputs/
