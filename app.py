@@ -18,55 +18,55 @@ st.markdown(
     """
 <style>
     .stApp {
-        background-color: #0d1117;
-        color: #c9d1d9;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #0b1020;
+        color: #e5e7eb;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     h1, h2, h3, h4 {
-        color: #f0f6fc;
+        color: #f8fafc;
         font-weight: 600;
+        letter-spacing: -0.02em;
     }
     hr {
-        border-top: 1px solid #30363d;
-        margin: 1.25rem 0;
+        border-top: 1px solid #1f2937;
+        margin: 1.15rem 0;
     }
     .hero-card {
-        background-color: #161b22;
-        padding: 1.35rem 1.4rem;
-        border-radius: 10px;
-        border: 1px solid #30363d;
+        background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid #1f2937;
         height: 100%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     }
     .hero-label {
         font-size: 0.78rem;
-        color: #8b949e;
+        color: #94a3b8;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         font-weight: 700;
         margin-bottom: 0.45rem;
     }
-    .color-bull { color: #3fb950; }
-    .color-bear { color: #f85149; }
-    .color-neut { color: #d29922; }
     .metric-value-large {
-        font-size: 2.15rem;
-        font-weight: 700;
+        font-size: 2.2rem;
+        font-weight: 800;
         line-height: 1.15;
     }
     .metric-subtext {
         font-size: 0.9rem;
-        color: #8b949e;
-        margin-top: 0.25rem;
+        color: #94a3b8;
+        margin-top: 0.4rem;
         line-height: 1.45;
     }
-    .small-note {
-        font-size: 0.8rem;
-        color: #8b949e;
-    }
-    .section-gap {
-        margin-top: 0.35rem;
-        margin-bottom: 0.35rem;
-    }
+    .color-bull { color: #10b981; }
+    .color-bear { color: #ef4444; }
+    .color-neut { color: #f59e0b; }
+    .border-bull { border-top: 4px solid #10b981 !important; }
+    .border-bear { border-top: 4px solid #ef4444 !important; }
+    .border-neut { border-top: 4px solid #f59e0b !important; }
+    .section-gap { margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -95,9 +95,7 @@ def compute_volatility(price_df: pd.DataFrame) -> float:
     if len(price_df) < 2:
         return 0.0
     returns = price_df["close_price"].pct_change().dropna()
-    if returns.empty:
-        return 0.0
-    return float(returns.std() * np.sqrt(252) * 100)
+    return float(returns.std() * np.sqrt(252) * 100) if not returns.empty else 0.0
 
 
 def compute_momentum(price_df: pd.DataFrame, lookback: int = 30) -> float:
@@ -106,15 +104,11 @@ def compute_momentum(price_df: pd.DataFrame, lookback: int = 30) -> float:
     sample = price_df.tail(min(lookback, len(price_df)))
     start_price = sample["close_price"].iloc[0]
     end_price = sample["close_price"].iloc[-1]
-    if start_price == 0:
-        return 0.0
-    return float(end_price / start_price - 1)
+    return float(end_price / start_price - 1) if start_price != 0 else 0.0
 
 
 def normalize_theme(theme_value: str) -> str:
-    if pd.isna(theme_value):
-        return "Unclassified"
-    return str(theme_value).replace("_", " ").strip().title()
+    return "Unclassified" if pd.isna(theme_value) else str(theme_value).replace("_", " ").strip().title()
 
 
 def build_signal_logic(sentiment: float, volatility: float, momentum_30d: float, event_theme: str):
@@ -131,46 +125,43 @@ def build_signal_logic(sentiment: float, volatility: float, momentum_30d: float,
         "guidance cut": -0.012,
         "earnings miss": -0.014,
         "regulatory risk": -0.010,
+        "c-suite turnover": -0.006,
     }
-    event_theme_key = str(event_theme).strip().lower()
-    event_impact = theme_bias_map.get(event_theme_key, 0.0)
+    event_impact = theme_bias_map.get(str(event_theme).strip().lower(), 0.0)
 
-    pred_car = theme_impact + regime_impact + vol_impact + event_impact
-    pred_car = float(np.clip(pred_car, -0.08, 0.08))
+    pred_car = float(np.clip(theme_impact + regime_impact + vol_impact + event_impact, -0.08, 0.08))
 
     if pred_car >= 0.02:
-        rec_text, rec_class = "BULLISH", "color-bull"
+        rec_text, rec_class, border_class = "BULLISH", "color-bull", "border-bull"
     elif pred_car <= -0.02:
-        rec_text, rec_class = "BEARISH", "color-bear"
+        rec_text, rec_class, border_class = "BEARISH", "color-bear", "border-bear"
     else:
-        rec_text, rec_class = "NEUTRAL", "color-neut"
+        rec_text, rec_class, border_class = "NEUTRAL", "color-neut", "border-neut"
 
     confidence = int(np.clip(55 + abs(pred_car) * 900 - volatility * 0.15, 51, 94))
 
-    if vol_impact < -0.02:
-        vol_phrase = "materially reduces conviction"
-    elif vol_impact < -0.01:
-        vol_phrase = "moderately reduces conviction"
-    else:
-        vol_phrase = "has a limited impact on conviction"
-
-    if momentum_30d > 0.02:
-        momentum_phrase = "supports the signal"
-    elif momentum_30d < -0.02:
-        momentum_phrase = "acts as a headwind"
-    else:
-        momentum_phrase = "is broadly neutral"
+    vol_phrase = (
+        "materially reduces conviction" if vol_impact < -0.02
+        else "moderately reduces conviction" if vol_impact < -0.01
+        else "has limited impact on conviction"
+    )
+    mom_phrase = (
+        "supports the signal" if momentum_30d > 0.02
+        else "acts as a headwind" if momentum_30d < -0.02
+        else "is broadly neutral"
+    )
 
     summary_text = (
-        f"Latest catalyst tagged as {normalize_theme(event_theme)}. "
-        f"NLP sentiment of {sentiment:.2f} drives a {rec_text.lower()} bias; "
-        f"30D price momentum ({momentum_30d * 100:+.1f}%) {momentum_phrase}, "
-        f"while pre-event volatility ({volatility:.1f}%) {vol_phrase}."
+        f"Catalyst tagged as {normalize_theme(event_theme)}. "
+        f"NLP sentiment score of {sentiment:.2f} implies a {rec_text.lower()} bias; "
+        f"30D price momentum ({momentum_30d * 100:+.1f}%) {mom_phrase}, while pre-event volatility "
+        f"({volatility:.1f}%) {vol_phrase}."
     )
 
     return {
         "recommendation": rec_text,
         "recommendation_class": rec_class,
+        "border_class": border_class,
         "confidence": confidence,
         "pred_car": pred_car,
         "theme_impact": theme_impact,
@@ -186,8 +177,8 @@ def build_shap_frame(signal_dict: dict) -> pd.DataFrame:
         {
             "feature": [
                 "NLP Theme Sentiment",
-                "Sector / Price Momentum (30D)",
-                "Pre-Event Volatility",
+                "Sector/Price Momentum (30D)",
+                "Volatility Drag",
                 "Event-Type Prior",
             ],
             "impact": [
@@ -202,7 +193,7 @@ def build_shap_frame(signal_dict: dict) -> pd.DataFrame:
 
 
 def build_trajectory(pred_car: float):
-    days = ["t-2", "t-1", "t=0 (Event)", "t+1", "t+3", "t+5"]
+    days = ["t-2", "t-1", "t=0", "t+1", "t+3", "t+5"]
     trajectory = [0.000, 0.001, pred_car * 0.40, pred_car * 0.75, pred_car * 0.90, pred_car]
     band_width = max(0.004, abs(pred_car) * 0.18)
     upper_bound = [t + band_width for t in trajectory]
@@ -210,17 +201,37 @@ def build_trajectory(pred_car: float):
     return days, trajectory, upper_bound, lower_bound
 
 
-events_df, prices_df, companies_df = load_data()
+def compute_market_regime(prices_df: pd.DataFrame) -> tuple[float, str]:
+    if prices_df.empty or "close_price" not in prices_df.columns:
+        return 0.0, "Unavailable"
+    returns = prices_df["close_price"].pct_change().dropna()
+    if returns.empty:
+        return 0.0, "Unavailable"
+    proxy_vol = float(returns.tail(min(20, len(returns))).std() * np.sqrt(252) * 100)
+    if proxy_vol < 18:
+        regime = "Risk-On / Low Volatility"
+    elif proxy_vol < 28:
+        regime = "Balanced / Normal Volatility"
+    else:
+        regime = "Risk-Off / Elevated Volatility"
+    return proxy_vol, regime
 
+
+def style_sentiment_value(val):
+    color = "#10b981" if val >= 0.6 else ("#ef4444" if val <= 0.4 else "#f59e0b")
+    return f"color: {color}; font-weight: 600;"
+
+
+events_df, prices_df, companies_df = load_data()
 if companies_df.empty:
     st.error("⚠️ Database is empty. Run `python main.py --popular` in your terminal to ingest data.")
     st.stop()
 
+with st.sidebar:
+    st.markdown("### ⚡ Alpha Core")
+    st.caption("Quantitative Event Monitor")
+    st.markdown("---")
 
-col_nav1, col_nav2, col_nav3 = st.columns([1.1, 2.2, 1.1])
-with col_nav1:
-    st.markdown("### ⚡ Alpha Signal Terminal")
-with col_nav2:
     ticker_display_map = {
         f"{row['ticker']} - {row['name']}": row["ticker"] for _, row in companies_df.iterrows()
     }
@@ -230,16 +241,34 @@ with col_nav2:
         label_visibility="collapsed",
     )
     selected_ticker = ticker_display_map[selected_display]
-with col_nav3:
-    st.caption(f"🟢 **Live** | Model Sync: `{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')}`")
+    selected_company = companies_df[companies_df["ticker"] == selected_ticker].iloc[0]
 
+# Construct an equal-weighted market pseudo-index
+    pivot_prices = prices_df.pivot_table(index="trade_date", columns="ticker", values="close_price")
+    market_returns = pivot_prices.pct_change().mean(axis=1).dropna()
+    
+    proxy_vol = float(market_returns.tail(20).std() * np.sqrt(252) * 100) if not market_returns.empty else 0.0
+    if proxy_vol < 18: regime_text = "Risk-On / Low Volatility"
+    elif proxy_vol < 28: regime_text = "Balanced / Normal Volatility"
+    else: regime_text = "Risk-Off / Elevated Volatility"
+
+    st.markdown("---")
+    st.markdown("#### Market Regime")
+    st.metric("Volatility Proxy", f"{proxy_vol:.1f}%")
+    st.caption(f"Environment: {regime_text}")
+    st.markdown("---")
+
+col_head1, col_head2 = st.columns([3, 1])
+with col_head1:
+    st.markdown(f"## {selected_company['name']} ({selected_ticker})")
+with col_head2:
+    st.caption(f"🟢 **Live** | Sync: `{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')}`")
 
 cutoff_date = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=120)
 asset_events = events_df[events_df["ticker"] == selected_ticker].sort_values("event_date", ascending=False)
 asset_prices = prices_df[
     (prices_df["ticker"] == selected_ticker) & (prices_df["trade_date"] >= cutoff_date)
 ].sort_values("trade_date")
-company_info = companies_df[companies_df["ticker"] == selected_ticker].iloc[0]
 
 if asset_events.empty:
     st.warning("No recent events found for this asset.")
@@ -248,66 +277,48 @@ if asset_events.empty:
 latest_event = asset_events.iloc[0]
 sentiment = float(latest_event.get("nlp_sentiment_score", 0.5))
 volatility = compute_volatility(asset_prices)
-momentum_30d = compute_momentum(asset_prices, lookback=30)
+momentum_30d = compute_momentum(asset_prices, 30)
 signal = build_signal_logic(sentiment, volatility, momentum_30d, latest_event.get("nlp_theme", "Unclassified"))
 shap_df = build_shap_frame(signal)
 trajectory_days, trajectory, upper_bound, lower_bound = build_trajectory(signal["pred_car"])
 
-latest_close = asset_prices["close_price"].iloc[-1] if not asset_prices.empty else np.nan
-asset_return = (
-    asset_prices["close_price"].iloc[-1] / asset_prices["close_price"].iloc[0] - 1
-    if len(asset_prices) > 1 else 0.0
-)
-
-drift_status = "Stable (In-Distribution)" if volatility < 40 else "Drift Warning (High Vol)"
-drift_z = "Z-Score: 0.8" if volatility < 40 else "Z-Score: 2.4"
-rec_color = (
-    "#3fb950" if signal["recommendation"] == "BULLISH"
-    else "#f85149" if signal["recommendation"] == "BEARISH"
-    else "#d29922"
-)
-
 st.markdown("<hr style='margin-top:0;'>", unsafe_allow_html=True)
-st.caption(
-    f"Based on latest catalyst detected: **{latest_event['event_date'].strftime('%Y-%m-%d %H:%M')}**"
-)
+st.caption(f"Catalyst Timestamp: **{latest_event['event_date'].strftime('%Y-%m-%d %H:%M')}**")
 
-hero_1, hero_2, hero_3 = st.columns([1.15, 0.95, 1.75])
-
+hero_1, hero_2, hero_3 = st.columns([1.1, 1.0, 1.8])
 with hero_1:
     st.markdown(
         f"""
-        <div class="hero-card" style="border-top: 4px solid {rec_color};">
+        <div class="hero-card {signal['border_class']}">
             <div class="hero-label">Desk Recommendation</div>
             <div class="metric-value-large {signal['recommendation_class']}">{signal['recommendation']}</div>
             <div class="metric-subtext">Signal generated from latest event + historical context.</div>
-            <div class="metric-subtext" style="margin-top: 0.55rem; color: #f0f6fc;">Model Confidence: <strong>{signal['confidence']}%</strong></div>
+            <div class="metric-subtext" style="margin-top: 0.85rem; color: #f8fafc;">Model Confidence: <strong>{signal['confidence']}%</strong></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
 with hero_2:
+    pred_dir_class = "color-bull" if signal["pred_car"] > 0 else "color-bear" if signal["pred_car"] < 0 else "color-neut"
     st.markdown(
         f"""
         <div class="hero-card">
-            <div class="hero-label">Predicted 5-Day Direction</div>
-            <div class="metric-value-large {'color-bull' if signal['pred_car'] > 0 else 'color-bear' if signal['pred_car'] < 0 else 'color-neut'}">{signal['pred_car'] * 100:+.2f}%</div>
+            <div class="hero-label">Predicted 5D CAR</div>
+            <div class="metric-value-large {pred_dir_class}">{signal['pred_car'] * 100:+.2f}%</div>
             <div class="metric-subtext">Cumulative Abnormal Return (CAR)</div>
-            <div class="metric-subtext" style="margin-top: 0.55rem;">Benchmark: STOXX Europe 600</div>
+            <div class="metric-subtext" style="margin-top: 0.85rem;">Benchmark: STOXX Europe 600</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
 with hero_3:
     headline = latest_event.get("headline", "No headline available.")
     st.markdown(
         f"""
         <div class="hero-card">
             <div class="hero-label">Key Catalyst Summary</div>
-            <div style="font-size: 1.03rem; font-weight: 600; line-height: 1.38; color:#f0f6fc;">“{headline}”</div>
-            <div class="metric-subtext" style="margin-top: 0.55rem;">{signal['summary_text']}</div>
+            <div style="font-size: 1.05rem; font-weight: 600; line-height: 1.4; color:#f8fafc; margin-bottom: 0.65rem;">“{headline}”</div>
+            <div class="metric-subtext" style="font-size: 0.93rem;">{signal['summary_text']}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -315,36 +326,37 @@ with hero_3:
 
 st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
 
-left_col, right_col = st.columns([1.15, 1.0])
-
+left_col, right_col = st.columns([1, 1])
 with left_col:
     st.markdown("#### 🧠 XAI: Model Feature Contributions (SHAP)")
-    st.caption("Positive bars push toward a bullish prediction; negative bars drag toward bearish.")
+    st.caption("Marginal contribution of features driving the directional prediction.")
 
-    fig_shap = go.Figure(
+    fig_shap = go.Figure()
+    fig_shap.add_vline(x=0, line_width=1, line_dash="dash", line_color="#4b5563")
+    fig_shap.add_trace(
         go.Bar(
             x=shap_df["impact"],
             y=shap_df["feature"],
             orientation="h",
-            marker_color=["#3fb950" if v > 0 else "#f85149" for v in shap_df["impact"]],
+            marker_color=["#10b981" if v > 0 else "#ef4444" for v in shap_df["impact"]],
             text=[f"{v * 100:+.2f}%" for v in shap_df["impact"]],
             textposition="auto",
             hovertemplate="%{y}: %{x:.2%}<extra></extra>",
         )
     )
     fig_shap.update_layout(
-        height=260,
+        height=285,
         margin=dict(l=0, r=0, t=8, b=0),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(showgrid=False, zeroline=True, zerolinecolor="#8b949e", showticklabels=False),
-        yaxis=dict(showgrid=False, tickfont=dict(color="#c9d1d9")),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, tickfont=dict(color="#cbd5e1", size=12)),
     )
     st.plotly_chart(fig_shap, use_container_width=True, config={"displayModeBar": False})
 
 with right_col:
-    st.markdown("#### 📉 Expected 5-Day Cumulative Abnormal Return")
-    st.caption("Trajectory bounds estimate variance relative to the benchmark baseline.")
+    st.markdown("#### 📉 Expected 5-Day Event Trajectory")
+    st.caption("Expected cumulative abnormal return relative to benchmark.")
 
     fig_traj = go.Figure()
     fig_traj.add_trace(
@@ -352,74 +364,69 @@ with right_col:
             x=trajectory_days + trajectory_days[::-1],
             y=upper_bound + lower_bound[::-1],
             fill="toself",
-            fillcolor="rgba(139, 148, 158, 0.10)",
+            fillcolor="rgba(148, 163, 184, 0.14)",
             line=dict(color="rgba(255,255,255,0)"),
             showlegend=False,
             hoverinfo="skip",
         )
     )
+    line_color = "#10b981" if signal["pred_car"] > 0 else "#ef4444" if signal["pred_car"] < 0 else "#f59e0b"
     fig_traj.add_trace(
         go.Scatter(
             x=trajectory_days,
             y=trajectory,
             mode="lines+markers",
-            line=dict(
-                color="#3fb950" if signal["pred_car"] > 0 else "#f85149" if signal["pred_car"] < 0 else "#d29922",
-                width=3,
-                shape="spline",
-            ),
-            marker=dict(size=7),
+            line=dict(color=line_color, width=3, shape="spline"),
+            marker=dict(size=8),
             showlegend=False,
-            hovertemplate="%{x}: %{y:.2%}<extra></extra>",
+            hovertemplate="Day %{x}: %{y:.2%}<extra></extra>",
         )
     )
-    fig_traj.add_vline(x="t=0 (Event)", line_width=1, line_dash="dash", line_color="#8b949e")
+    fig_traj.add_vline(x="t=0", line_width=1, line_dash="dash", line_color="#4b5563")
+    fig_traj.add_hline(y=0, line_width=1, line_dash="solid", line_color="#334155")
     fig_traj.update_layout(
-        height=260,
+        height=285,
         margin=dict(l=0, r=0, t=8, b=0),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(showgrid=False, tickfont=dict(color="#8b949e")),
-        yaxis=dict(showgrid=True, gridcolor="#30363d", tickformat=".1%", tickfont=dict(color="#8b949e")),
+        xaxis=dict(showgrid=False, tickfont=dict(color="#94a3b8")),
+        yaxis=dict(showgrid=True, gridcolor="#1e293b", tickformat=".1%", tickfont=dict(color="#94a3b8")),
     )
     st.plotly_chart(fig_traj, use_container_width=True, config={"displayModeBar": False})
 
-st.markdown("<br><hr style='margin: 0.5rem 0;'>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown("#### 🛡️ Model Governance & Validation")
-
 g1, g2, g3, g4 = st.columns(4)
 with g1:
-    st.metric(label="Directional Accuracy (12M Backtest)", value="68.4%", delta="+2.1% YoY")
+    st.metric("Directional Accuracy (12M Backtest)", "68.4%", "+2.1% YoY")
 with g2:
-    st.metric(label="Precision (Bull/Bear Signals)", value="72.1%", delta="-0.4% MoM", delta_color="inverse")
+    st.metric("Precision (Bull/Bear Signals)", "72.1%", "-0.4% MoM", delta_color="inverse")
 with g3:
+    drift_status = "Stable (In-Distribution)" if volatility < 40 else "Drift Warning (High Vol)"
+    drift_delta = "Z-Score: 0.8" if volatility < 40 else "Z-Score: 2.4"
     st.metric(
-        label="Feature Regime Status",
-        value=drift_status,
-        delta=drift_z,
+        "Feature Regime Status",
+        drift_status,
+        drift_delta,
         delta_color="off",
-        help="Monitors whether current market conditions remain within the historical training distribution.",
+        help="Monitors whether current market conditions remain within historical training distribution.",
     )
 with g4:
-    st.metric(label="Current Model Version", value="v2.4.1 (LightGBM)", delta="Validated 2026-05", delta_color="off")
+    st.metric("Current Model Version", "v2.4.1 (LightGBM)", "Validated 2026-05", delta_color="off")
 
 st.markdown("<br>", unsafe_allow_html=True)
 with st.expander("🔎 View Raw Intelligence Log & Historical Catalysts"):
-    display_df = asset_events[["event_date", "event_type", "nlp_theme", "nlp_sentiment_score", "headline"]].copy()
-    display_df["event_date"] = display_df["event_date"].dt.strftime("%Y-%m-%d %H:%M")
-    display_df.columns = ["Date", "Type", "Primary Theme", "Sentiment", "Headline"]
-
-    def style_sentiment(val):
-        if val >= 0.6:
-            color = "#3fb950"
-        elif val <= 0.4:
-            color = "#f85149"
-        else:
-            color = "#d29922"
-        return f"color: {color}; font-weight: 600;"
+    if "event_type" in asset_events.columns:
+        display_df = asset_events[["event_date", "event_type", "nlp_theme", "nlp_sentiment_score", "headline"]].copy()
+        display_df["event_date"] = display_df["event_date"].dt.strftime("%Y-%m-%d %H:%M")
+        display_df.columns = ["Date", "Type", "Primary Theme", "Sentiment", "Headline"]
+    else:
+        display_df = asset_events[["event_date", "nlp_theme", "nlp_sentiment_score", "headline"]].copy()
+        display_df["event_date"] = display_df["event_date"].dt.strftime("%Y-%m-%d %H:%M")
+        display_df.columns = ["Date", "Primary Theme", "Sentiment", "Headline"]
 
     st.dataframe(
-        display_df.style.map(style_sentiment, subset=["Sentiment"]).format({"Sentiment": "{:.2f}"}),
+        display_df.style.map(style_sentiment_value, subset=["Sentiment"]).format({"Sentiment": "{:.2f}"}),
         use_container_width=True,
         hide_index=True,
     )

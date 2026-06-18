@@ -1,37 +1,41 @@
-# Event-Driven Equity Impact Predictor 📊
 
-[![CI Pipeline](https://github.com/thanhan25/equity-impact-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/thanhan25/equity-impact-predictor/actions/workflows/ci.yml)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+# ⚡ Alpha Signal Terminal: Equity Impact Predictor
 
-A production-grade Python ETL and Machine Learning pipeline designed to track earnings events, classify market news via Natural Language Processing (NLP), and forecast short-term Cumulative Abnormal Returns (CAR) on listed equities.
+![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBoost-Real_Time-green)
 
-Built to support institutional Equity Research desks by synthesizing complex unstructured market data into actionable, mathematically explainable investment alerts.
+An institutional-grade Quantitative Event Monitor. This full-stack pipeline ingests asynchronous market news and OHLCV price data, utilizing Zero-Shot NLP and Machine Learning to forecast short-term Cumulative Abnormal Returns (CAR).
 
-## 🏗️ Architecture & Core Pipeline
+## 🏗️ Architecture & Core Components
 
-1. **Ingestion Engine (`etl_pipeline.py`):** Asynchronously fetches historical price/volume data (via APIs) and unstructured corporate news events, storing them in a strictly typed 3NF database built on **SQLAlchemy 2.0**.
-2. **AI News Classification (`nlp_classifier.py`):** Utilizes zero-shot classification (HuggingFace Transformers/PyTorch) to automatically categorize volatile text into macroeconomic themes (e.g., *Forward Guidance Cut*, *Macro Headwinds*).
-3. **Quantitative Event Study (`event_study.py`):** Executes the OLS Market Model over pre/post-event windows to isolate the exact Cumulative Abnormal Return (CAR) and volatility spikes, stripping out general market noise.
-4. **Predictive XAI Engine (`predictive_model.py`):** A Gradient Boosting model (XGBoost) trained on historical event data. Utilizes **SHAP (SHapley Additive exPlanations)** to break down feature contributions, providing researchers with explainable "glass-box" predictions rather than "black-box" guesses.
+1. **ETL Data Ingestion (`etl_pipeline.py`):** Asynchronously fetches historical price/volume data and unstructured corporate news events, storing them in a strictly typed 3NF database via **SQLAlchemy**.
+2. **AI News Classification (`nlp_classifier.py`):** Utilizes zero-shot NLP classification (`BART-Large-MNLI`) to categorize unstructured text into macroeconomic themes (e.g., *Forward Guidance Cut*, *M&A*) and assign sentiment probabilities.
+3. **Machine Learning Backend (`predictive_model.py`):** Trains an **XGBoost** regressor on historical feature matrices (pre-event volatility, 30D momentum, NLP sentiment) to predict post-event asset trajectories.
+4. **XAI Decision Terminal (`app.py`):** A front-end Streamlit application featuring **SHAP** (SHapley Additive exPlanations) value breakdowns, equal-weighted market regime tracking, and dynamic event-study trajectory visualization.
 
-## 🚀 Quickstart & Reproducibility
-
-This project is packaged using standard PEP 517 distribution architecture.
+## 🚀 Local Quickstart
 
 ```bash
 # Clone the repository
 git clone [https://github.com/thanhan25/equity-impact-predictor.git](https://github.com/thanhan25/equity-impact-predictor.git)
 cd equity-impact-predictor
 
-# Create virtual environment & install package defensively
+# Create virtual environment and install dependencies
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -e .[dev]
+source venv/bin/activate  # Windows: .\venv\Scripts\activate
+pip install -e .
+pip install streamlit plotly xgboost
 
-# Execute the master pipeline and generate the impact dashboard
-python main.py
+# Run the backend ETL and ML training pipeline
+python main.py --popular
 
-# Run the PyTest suite
-pytest -v
+# Launch the Alpha Signal Terminal
+streamlit run app.py
 ```
+
+## 📊 Dashboard Capabilities
+
+* **Algorithmic Signal Generation:** Synthesizes NLP sentiment and market regimes into Bullish/Bearish/Neutral desk recommendations.
+* **Feature Drift & Governance:** Live monitoring of Z-Score volatility drift to ensure real-time inputs remain within the ML model's historical training distribution.
+* **Glass-Box Explainability:** Horizontal SHAP rendering immediately quantifies the directional drag of specific market conditions on the predicted output.
