@@ -1,193 +1,153 @@
 
 # ⚡ Alpha Signal Terminal: Equity Impact Predictor
 
-![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)
-![LightGBM](https://img.shields.io/badge/LightGBM-Model-00C853)
-![HuggingFace](https://img.shields.io/badge/HuggingFace-NLP-FFD21E)
+Alpha Signal Terminal is an event-driven equity research application that combines market data engineering, NLP-based catalyst classification, predictive modeling, and an interactive Streamlit interface. It is designed as a portfolio project that demonstrates how unstructured news and structured price data can be turned into a short-horizon signal workflow for listed equities.
 
-Alpha Signal Terminal is an event-driven equity research project that ingests market news and price data, classifies catalysts with NLP, engineers event features, and predicts short-term cumulative abnormal return (CAR) using a tabular machine-learning pipeline. The project is designed as a portfolio-grade research terminal rather than a notebook demo: it combines ETL, modeling, explainability, and a decision-facing Streamlit interface.
+## Live app
 
-## Live application
+[Open the live application](https://equity-impact-predictor-mjjwp8oarqbeenecyzk3pw.streamlit.app/)
 
-[Open the live Streamlit app](https://equity-impact-predictor-mjjwp8oarqbeenecyzk3pw.streamlit.app/)
+![Alpha Signal Terminal dashboard](assets/dashboard-preview.png)
 
-## Platform preview
+## Overview
 
-The dashboard is built to make the model output scannable for an equity-research or desk workflow: recommendation, predicted 5-day CAR, catalyst summary, SHAP-style feature contribution view, event trajectory, and governance metrics are all shown on one screen.
+The application ingests market events and historical price data, transforms raw text into structured catalyst signals, engineers event-level features, and estimates short-term cumulative abnormal return after a new event. The front end then presents the output in a research-terminal format with recommendation, predicted CAR, feature contribution, trajectory view, and a historical event log.
 
-<div align="center">
-  <img src="assets/dashboard-preview.png" alt="Alpha Signal Terminal dashboard preview" width="900" />
-</div>
+## Main capabilities
 
-## What the project does
+* Ingests OHLCV and event/news data into a local database workflow.
+* Classifies event text into market-relevant themes and sentiment signals.
+* Builds features such as volatility, recent momentum, and event-type priors.
+* Estimates 5-day cumulative abnormal return after an event.
+* Presents the result in an interactive dashboard built for research-style interpretation.
 
-- Ingests historical OHLCV price data and event/news data into a local SQL-backed workflow.
-- Classifies event text into market-relevant themes and derives sentiment-style features.
-- Builds event-level features such as pre-event volatility, recent momentum, and event-type priors.
-- Predicts 5-day cumulative abnormal return after a catalyst.
-- Visualizes model logic with explainability-oriented charts and decision-ready monitoring panels.
+## Project components
 
-## Architecture
+## Data ingestion
 
-### 1. Data ingestion
+`etl_pipeline.py` collects and standardizes historical price and event data for downstream use.
 
-`etl_pipeline.py` loads and normalizes historical price data plus event/news records into the working database.
+## NLP classification
 
-### 2. NLP classification
+`nlp_classifier.py` maps raw headlines or event text into structured categories and sentiment-oriented fields.
 
-`nlp_classifier.py` transforms raw headlines or event text into structured labels such as macro headwinds, earnings beat, regulatory risk, or guidance cut.
+## Predictive model
 
-### 3. Predictive modeling
+`predictive_model.py` trains the event-level model used to estimate post-catalyst return direction and magnitude.
 
-`predictive_model.py` trains a LightGBM model on engineered event features to estimate post-event short-horizon CAR.
+## Streamlit terminal
 
-### 4. Decision terminal
-
-`app.py` serves the Streamlit interface with recommendation panels, event trajectory visualization, model governance indicators, and the intelligence log.
+`app.py` provides the user interface for signal review, event inspection, and visual analytics.
 
 ## Repository structure
 
-```text
-.
-├── app.py
-├── main.py
-├── etl_pipeline.py
-├── nlp_classifier.py
-├── predictive_model.py
-├── data/
-│   └── processed/
-├── assets/
-├── requirements.txt / pyproject.toml
-└── README.md
-```
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">text</div></div><div><span><code><span><span>.
+</span></span><span>├── app.py
+</span><span>├── main.py
+</span><span>├── etl_pipeline.py
+</span><span>├── nlp_classifier.py
+</span><span>├── predictive_model.py
+</span><span>├── data/
+</span><span>│   └── processed/
+</span><span>├── assets/
+</span><span>└── README.md</span></code></span></div></div></div></pre>
 
-Adjust the tree above if your actual filenames differ.
+Update the structure section if your repository contains additional modules or different filenames.
 
-## Modeling logic
+## Quickstart
 
-The current application combines four main drivers at the event level:
+## 1. Clone the repository
 
-- NLP theme sentiment
-- 30-day price momentum
-- pre-event volatility drag
-- event-type prior
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span class="token token">git</span><span> clone https://github.com/thanhan25/equity-impact-predictor.git
+</span></span><span><span></span><span class="token token">cd</span><span> equity-impact-predictor</span></span></code></span></div></div></div></pre>
 
-These are aggregated into a directional signal and a predicted 5-day CAR, then surfaced in the interface through feature contribution and trajectory charts.
+## 2. Create a virtual environment
 
-## Local quickstart
+**Windows PowerShell**
 
-### 1. Clone the repository
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">powershell</div></div><div><span><code><span><span>python </span><span class="token token operator">-</span><span>m venv venv
+</span></span><span><span></span><span class="token token punctuation">.</span><span>env\Scripts\Activate</span><span class="token token punctuation">.</span><span>ps1</span></span></code></span></div></div></div></pre>
 
-```bash
-git clone https://github.com/thanhan25/equity-impact-predictor.git
-cd equity-impact-predictor
-```
+**macOS / Linux**
 
-### 2. Create and activate a virtual environment
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span>python -m venv venv
+</span></span><span><span></span><span class="token token">source</span><span> venv/bin/activate</span></span></code></span></div></div></div></pre>
 
-**Windows (PowerShell):**
+## 3. Install dependencies
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
+If your project uses editable installation:
 
-**macOS / Linux:**
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span>pip </span><span class="token token">install</span><span> -e </span><span class="token token">.</span></span></code></span></div></div></div></pre>
 
-```bash
-python -m venv venv
-source venv/bin/activate
-```
+Or, if you use a requirements file:
 
-### 3. Install dependencies
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span>pip </span><span class="token token">install</span><span> -r requirements.txt</span></span></code></span></div></div></div></pre>
 
-If you are using a package-based setup:
+If needed, install the key packages directly:
 
-```bash
-pip install -e .
-```
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span>pip </span><span class="token token">install</span><span> streamlit plotly lightgbm sqlalchemy pandas numpy</span></span></code></span></div></div></div></pre>
 
-If you are using a requirements file:
+## 4. Run the pipeline
 
-```bash
-pip install -r requirements.txt
-```
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span>python main.py --popular</span></span></code></span></div></div></div></pre>
 
-If some UI or modeling packages are not already captured in your environment file, install them explicitly:
+This step should populate the processed database used by the Streamlit app.
 
-```bash
-pip install streamlit plotly lightgbm sqlalchemy pandas numpy
-```
+## 5. Launch the app
 
-### 4. Run the ingestion and modeling pipeline
+<pre class="not-prose w-full rounded font-mono text-sm font-extralight"><div class="codeWrapper bg-subtle text-light selection:text-super selection:bg-super/10 my-md relative flex flex-col rounded-lg font-mono text-sm font-medium"><div class="translate-y-xs -translate-x-xs bottom-xl mb-xl flex h-0 items-start justify-end sm:sticky sm:top-xs"><div class="overflow-hidden border-subtlest ring-subtlest divide-subtlest bg-base rounded-full"><div class="border-subtlest ring-subtlest divide-subtlest bg-subtle"></div></div></div><div class="-mt-xl"><div><div data-testid="code-language-indicator" class="text-quiet bg-quiet py-xs px-sm inline-block rounded-br rounded-tl-lg text-xs font-thin">bash</div></div><div><span><code><span><span>streamlit run app.py</span></span></code></span></div></div></div></pre>
 
-```bash
-python main.py --popular
-```
+After launch, open the local address shown in the terminal, usually `http://localhost:8501`.
 
-This step is expected to populate the processed database used by the app.
+## Signal logic
 
-### 5. Launch the terminal
+The current workflow uses four core event-level drivers:
 
-```bash
-streamlit run app.py
-```
+* NLP theme sentiment
+* 30-day momentum
+* pre-event volatility drag
+* event-type prior
 
-Then open the local URL shown in the terminal, usually `http://localhost:8501`.
+These inputs are aggregated into a directional recommendation and a predicted 5-day CAR, then visualized through feature contribution and trajectory panels.
 
 ## Core features
 
-| Feature                    | What it does                                                                    |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| Event-driven signal engine | Scores likely short-term post-event equity impact                               |
-| NLP catalyst labeling      | Converts unstructured news into structured themes                               |
-| 5-day CAR view             | Frames prediction in event-study terms rather than generic price direction      |
-| XAI panel                  | Makes feature contribution visible instead of treating the model as a black box |
-| Governance panel           | Surfaces validation and regime-awareness metrics                                |
-| Intelligence log           | Preserves the underlying catalyst history behind the recommendation             |
+| Feature                    | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| Event-driven signal engine | Estimates likely short-term equity impact after a catalyst |
+| NLP catalyst labeling      | Turns raw text into structured themes                      |
+| 5-day CAR framework        | Evaluates the signal in event-study terms                  |
+| Explainability view        | Shows feature contribution instead of only output          |
+| Governance panel           | Displays model monitoring and validation-style metrics     |
+| Intelligence log           | Keeps the underlying event history visible                 |
 
-## Why this project is strong for a finance / data role
+## Why this project is valuable
 
-This project demonstrates several things at once:
+This repository demonstrates a combination of technical and analytical skills that are useful in finance, analytics, and applied machine-learning roles:
 
-- Python-based ETL and data preparation
-- SQL-backed analytical workflow
-- feature engineering for event-driven modeling
-- machine-learning application in a financial context
-- explainability and governance thinking
-- product-minded presentation through Streamlit
+* Python ETL and data preparation
+* SQL-oriented data workflow
+* event-driven feature engineering
+* applied machine learning in a finance context
+* explainability and model-governance thinking
+* dashboard presentation for non-technical end users
 
-That combination makes it more compelling than a single notebook or static dashboard screenshot.
+## Important note on screenshots
 
-## Recommended screenshots
+Your current GitHub README is showing broken images because the referenced files are not present at the paths used by the README. GitHub will only render images correctly if the files actually exist in the repository, for example:
 
-To make the repository look polished on GitHub, add these two images under `assets/`:
+* `assets/dashboard-preview.png`
+* `assets/xai-trajectory-preview.png`
 
-- `assets/dashboard-preview.png` — the full dashboard view
-- `assets/xai-trajectory-preview.png` — a cropped SHAP + trajectory panel
+If those files are not in the repo yet, do not include `<img>` tags. It is better to have no screenshot than a broken image placeholder.
 
-If you add the second image, you can place it here:
+## Recommended next improvements
 
-```html
-<div align="center">
-  <img src="assets/xai-trajectory-preview.png" alt="Feature contribution and event trajectory view" width="900" />
-</div>
-```
-
-## Notes
-
-- Keep the README consistent with the real implementation. If you use zero-shot classification in one version and FinBERT or another model in another version, standardize the wording.
-- Keep the model name consistent across the README, app UI, and codebase.
-- If the app uses heuristic signal logic for demonstration, state that clearly or connect it to saved model artifacts before presenting it as a production model.
-
-## Next improvements
-
-- Replace heuristic front-end signal generation with saved model inference.
-- Persist actual SHAP outputs from the trained model.
-- Add backtest documentation and metric methodology.
-- Add tests and GitHub Actions badges once CI is configured.
+* Save real dashboard screenshots into the `assets/` folder.
+* Connect the front-end signal output to persisted model artifacts.
+* Add backtest documentation and metric methodology.
+* Add tests, CI, and release workflow badges.
 
 ## License
 
-This project is licensed under the MIT License
+This project is licensed under the MIT License.
